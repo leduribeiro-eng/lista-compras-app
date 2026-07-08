@@ -4,9 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Compras</title>
-    <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2c3e50">
-<link rel="apple-touch-icon" href="icon.png">
     <style>
         :root {
             --primary: #2c3e50;
@@ -247,6 +244,13 @@
             padding-bottom: 10px;
             border-bottom: 2px solid var(--border);
             margin-bottom: 20px;
+        }
+
+        /* Nova regra para rolagem móvel */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-bottom: 1px solid var(--border);
         }
     </style>
 </head>
@@ -514,24 +518,26 @@
 
             catBlock.innerHTML = `
                 <h3 class="category-title">${category}</h3>
-                <table class="product-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 30%;">Produto</th>
-                            <th style="width: 30%;">Qtd / Unidade</th>
-                            <th style="width: 20%;">Preço por Unidade</th>
-                            <th style="width: 15%;">Valor</th>
-                            <th style="width: 5%;"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="body-${category}">
-                        ${rowsHtml}
-                        <tr class="subtotal-row">
-                            <td colspan="3" style="text-align: right;">Subtotal da Categoria:</td>
-                            <td colspan="2"><span class="cat-subtotal">R$ ${categorySubtotal.toFixed(2).replace('.', ',')}</span></td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-wrapper">
+                    <table class="product-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 30%;">Produto</th>
+                                <th style="width: 30%;">Qtd / Unidade</th>
+                                <th style="width: 20%;">Preço por Unidade</th>
+                                <th style="width: 15%;">Valor</th>
+                                <th style="width: 5%;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-${category}">
+                            ${rowsHtml}
+                            <tr class="subtotal-row">
+                                <td colspan="3" style="text-align: right;">Subtotal da Categoria:</td>
+                                <td colspan="2"><span class="cat-subtotal">R$ ${categorySubtotal.toFixed(2).replace('.', ',')}</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
                 <div class="add-new-row">
                     <input type="text" id="new-prod-${category}" placeholder="Adicionar novo produto em ${category}...">
                     <button class="btn-accent" onclick="addNewProduct('${category}')">Adicionar</button>
@@ -770,7 +776,6 @@
                     margin: 0; 
                     font-size: 14px; 
                     line-height: 1.4;
-                    /* Margens solicitadas aplicadas via padding para garantir compatibilidade */
                     padding-top: 1.5cm;
                     padding-right: 7.0cm;
                     padding-bottom: 1.0cm;
