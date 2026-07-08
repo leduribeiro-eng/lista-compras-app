@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Compras</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #27ae60;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --border: #dcdde1;
+            --text: #2f3640;
+            --danger: #c0392b;
+            --highlight: #edf2f7; 
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        h2.section-title {
+            font-size: 1.1rem;
+            color: var(--primary);
+            margin: 0 0 10px 0;
+            text-transform: uppercase;
+            border-bottom: 2px solid #f1f2f6;
+            padding-bottom: 5px;
+        }
+
+        .section-block {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .highlight-block {
+            background: var(--highlight) !important;
+            border: 2px solid #cbd5e1 !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .row-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .panel-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .all-lists-link {
+            color: #2980b9;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-left: 15px;
+        }
+
+        .all-lists-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn-accent { background: var(--accent); color: white;}
+        .btn-accent:hover { background: #219653; }
+        .btn-primary { background: #2980b9; color: white;}
+        .btn-primary:hover { background: #2573a7; }
+        .btn-warning { background: #e67e22; color: white;}
+        .btn-warning:hover { background: #d35400; }
+        .btn-danger { background: var(--danger); color: white;}
+        .btn-danger:hover { background: #a93226; }
+        
+        button {
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-del-item {
+            background: transparent;
+            color: var(--danger);
+            padding: 2px 6px;
+            font-size: 1rem;
+            border-radius: 4px;
+        }
+        .btn-del-item:hover { background: #fce4e4; }
+
+        .category-block {
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .category-title {
+            background: var(--primary);
+            color: white;
+            padding: 12px 15px;
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .product-table th, .product-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .product-table th {
+            background: #f8f9fa;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #7f8c8d;
+        }
+
+        .subtotal-row {
+            background: #f1f2f6;
+            font-weight: bold;
+        }
+
+        .subtotal-row td {
+            padding: 10px 15px;
+            color: var(--primary);
+        }
+
+        .add-new-row {
+            background: #f8f9fa;
+            display: flex;
+            gap: 10px;
+            padding: 12px 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .add-new-row input { flex: 1; padding: 6px 10px; }
+        
+        .inline-totals {
+            display: flex;
+            justify-content: flex-end;
+            background: #f1f2f6;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .total-display { color: var(--accent); margin-left: 10px; }
+        
+        .top-actions-list {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 15px;
+        }
+
+        .bottom-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border);
+        }
+        .bottom-actions button { flex: 1; padding: 15px; font-size: 1.1rem; }
+
+        .price-label { font-size: 0.8rem; color: #7f8c8d; display: block; margin-top: 4px; }
+        .input-group-tight { display: flex; align-items: center; gap: 5px; }
+        
+        #ultimas-listas-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .ultima-lista-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: -20px;
+            background: var(--card-bg);
+            z-index: 100;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="dashboard-view">
+    <h1>LISTA DE COMPRAS</h1>
+
+    <div class="section-block highlight-block">
+        <h2 class="section-title">Nova Lista</h2>
+        <div class="row-grid">
+            <div class="panel-group" style="max-width: 200px;">
+                <label for="current-date">Data da compra:</label>
+                <input type="date" id="current-date">
+            </div>
+            <div class="panel-group">
+                <label for="market-name">Local:</label>
+                <input type="text" id="market-name" placeholder="Nome do local onde a compra será feita...">
+            </div>
+            <div style="display: flex; align-items: center;">
+                <button type="button" class="btn-accent" onclick="fazerNovaLista()">Fazer Nova Lista</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-title">Últimas Listas</h2>
+        <div id="ultimas-listas-container">
+            </div>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-title">Todas as Listas</h2>
+        <div class="row-grid">
+            <div class="panel-group">
+                <select id="history-select">
+                    <option value="">Nenhuma lista selecionada...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <button type="button" class="btn-primary" onclick="abrirListaSelecionada()">Editar Lista</button>
+                <button type="button" class="btn-danger" onclick="deleteSelectedList()">Excluir Lista</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-block">
+        <h2 class="section-title">Comparar Listas</h2>
+        <div class="row-grid">
+            <div class="panel-group">
+                <label for="compare-list-1">Lista 1:</label>
+                <select id="compare-list-1">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+            <div class="panel-group">
+                <label for="compare-list-2">Lista 2:</label>
+                <select id="compare-list-2">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <button type="button" class="btn-warning" onclick="compareLists()">Comparar</button>
+            </div>
+        </div>
+        <div style="margin-top: 15px;">
+            <a class="all-lists-link" style="margin-left: 0;" onclick="openEvolutionChart()">Mensal</a>
+        </div>
+    </div>
+</div>
+
+<div class="container" id="list-view" style="display: none;">
+    <div class="sticky-header">
+        <div class="top-actions-list">
+            <button type="button" class="btn-primary" onclick="voltarAoInicio()">← Voltar ao início</button>
+            <div style="text-align: right;">
+                <h2 id="list-header-info" style="margin:0; color: var(--primary); font-size: 1.2rem;"></h2>
+            </div>
+        </div>
+
+        <div class="inline-totals">
+            <span>Total da Lista:</span>
+            <span id="current-total" class="total-display">R$ 0,00</span>
+        </div>
+
+        <div class="filter-section">
+            <label for="category-filter" style="margin-right: 10px;">Separar por Categoria:</label>
+            <select id="category-filter" onchange="filterCategories()">
+                <option value="todos">Todas as Categorias</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="list-container"></div>
+
+    <div class="bottom-actions">
+        <button type="button" class="btn-primary" onclick="saveCurrentList()">Salvar Lista</button>
+        <button type="button" class="btn-warning" onclick="printFilteredList()">Imprimir Lista</button>
+    </div>
+</div>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfOzGzMmTJPXrRI7wqUrPTFz9my3WyN0CUrXlsV6stT5cDxQUI0vPcyDeINcxn_7rt/exec";
+
+    const initialData = {
+        "BÁSICOS": ["Arroz", "Feijão", "Açúcar", "Sal", "Farinha de Trigo", "Óleo de Soja"],
+        "PÃES": ["Pão congelado", "Pão de Forma"],
+        "CARNES": ["Carne Moída", "Peito de Frango", "Filé de Peixe"],
+        "LEGUMES": ["Beterraba", "Brócolis", "Cenoura", "Batata", "Batata Doce", "Abóbora", "Abobrinha", "Pimentão", "Tomate"],
+        "VERDURAS": ["Alface", "Repolho", "Cheiro-Verde"],
+        "FRUTAS": ["Banana", "Maçã", "Abacate"],
+        "DIVERSOS": ["Milho (lata)", "Ervilha (lata)", "Cacau em Pó", "Leite", "Leite em pó"],
+        "HIGIENE PESSOAL": ["Sabonete", "Pasta de Dente", "Shampoo", "Condicionador"],
+        "LIMPEZA": ["Sabão (roupa)", "Amaciante", "Detergente", "Desinfetante", "Água Sanitária"]
+    };
+
+    let appState = {
+        currentList: {},
+        history: [],
+        marketName: "",
+        editingIndex: null
+    };
+
+    let saveTimeout = null;
+
+    document.getElementById('current-date').valueAsDate = new Date();
+
+    function init() {
+        updateHistoryDropdown();
+        renderUltimasListas();
+    }
+
+    function fazerNovaLista() {
+        appState.marketName = document.getElementById('market-name').value;
+        appState.editingIndex = null;
+        
+        appState.currentList = {};
+        for (const [cat, products] of Object.entries(initialData)) {
+            appState.currentList[cat] = products.map(prod => ({
+                name: prod,
+                unitPrice: 0,
+                quantity: 0,
+                unitMeasure: "unidade"
+            }));
+        }
+        
+        abrirViewLista();
+    }
+
+    function abrirListaSelecionada() {
+        const select = document.getElementById('history-select');
+        const idx = select.value;
+        if (idx === "") {
+            alert("Selecione uma lista primeiro.");
+            return;
+        }
+
+        appState.editingIndex = parseInt(idx, 10);
+
+        const listToOpen = appState.history[idx];
+        appState.currentList = JSON.parse(JSON.stringify(listToOpen.items));
+        
+        const marketMatch = listToOpen.label.split(' - ');
+        const marketName = marketMatch.length === 3 ? marketMatch[2] : "Local Desconhecido";
+        
+        document.getElementById('market-name').value = marketName;
+        appState.marketName = marketName;
+
+        abrirViewLista();
+    }
+
+    function abrirViewLista() {
+        document.getElementById('dashboard-view').style.display = 'none';
+        document.getElementById('list-view').style.display = 'block';
+        
+        const d = document.getElementById('current-date').value;
+        const rawDate = d ? d.split('-').reverse().join('/') : '';
+        document.getElementById('list-header-info').textContent = `${rawDate} - ${appState.marketName || 'Local não informado'}`;
+        
+        populateCategoryFilter();
+        renderList();
+    }
+
+    function voltarAoInicio() {
+        document.getElementById('list-view').style.display = 'none';
+        document.getElementById('dashboard-view').style.display = 'block';
+        appState.editingIndex = null;
+        updateHistoryDropdown();
+        renderUltimasListas();
+    }
+
+    function populateCategoryFilter() {
+        const filter = document.getElementById('category-filter');
+        filter.innerHTML = '<option value="todos">Todas as Categorias</option>';
+        Object.keys(appState.currentList).forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.textContent = cat;
+            filter.appendChild(opt);
+        });
+    }
+
+    function renderList() {
+        const container = document.getElementById('list-container');
+        container.innerHTML = '';
+        let overallTotal = 0;
+
+        for (const [category, products] of Object.entries(appState.currentList)) {
+            const catBlock = document.createElement('div');
+            catBlock.className = 'category-block';
+            catBlock.setAttribute('data-category', category);
+
+            let categorySubtotal = 0;
+            let rowsHtml = '';
+
+            products.forEach((prod, index) => {
+                const qty = prod.quantity !== undefined ? prod.quantity : 0;
+                const uPrice = prod.unitPrice !== undefined ? prod.unitPrice : 0;
+                const unitMeasure = prod.unitMeasure || 'unidade';
+                
+                let totalPrice = 0;
+                if (unitMeasure === 'gramas') {
+                    totalPrice = (qty / 1000) * uPrice;
+                } else {
+                    totalPrice = qty * uPrice; 
+                }
+
+                categorySubtotal += totalPrice;
+
+                let priceLabel = 'por unidade';
+                if (unitMeasure === 'kg' || unitMeasure === 'gramas') priceLabel = 'por kg';
+                else if (unitMeasure === 'litro') priceLabel = 'por litro';
+
+                rowsHtml += `
+                    <tr>
+                        <td class="prod-name" style="font-weight: 500;">${prod.name}</td>
+                        <td>
+                            <div class="input-group-tight">
+                                <input type="number" min="0" step="any" value="${qty}" style="width: 70px;" 
+                                    onchange="updateProduct('${category}', ${index}, 'quantity', this.value)">
+                                <select onchange="updateProduct('${category}', ${index}, 'unitMeasure', this.value)">
+                                    <option value="unidade" ${unitMeasure === 'unidade' ? 'selected' : ''}>unidade</option>
+                                    <option value="kg" ${unitMeasure === 'kg' ? 'selected' : ''}>kg</option>
+                                    <option value="gramas" ${unitMeasure === 'gramas' ? 'selected' : ''}>gramas</option>
+                                    <option value="litro" ${unitMeasure === 'litro' ? 'selected' : ''}>litro</option>
+                                </select>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="number" step="0.01" min="0" value="${uPrice || ''}" placeholder="0,00" style="width: 85px;" 
+                                onchange="updateProduct('${category}', ${index}, 'unitPrice', this.value)">
+                            <span class="price-label">${priceLabel}</span>
+                        </td>
+                        <td>
+                            <span class="row-total" style="font-weight: 600;">R$ ${totalPrice.toFixed(2).replace('.', ',')}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn-del-item" title="Excluir Item" onclick="deleteIndividualItem('${category}', ${index})">✕</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            overallTotal += categorySubtotal;
+
+            catBlock.innerHTML = `
+                <h3 class="category-title">${category}</h3>
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Produto</th>
+                            <th style="width: 30%;">Qtd / Unidade</th>
+                            <th style="width: 20%;">Preço por Unidade</th>
+                            <th style="width: 15%;">Valor</th>
+                            <th style="width: 5%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="body-${category}">
+                        ${rowsHtml}
+                        <tr class="subtotal-row">
+                            <td colspan="3" style="text-align: right;">Subtotal da Categoria:</td>
+                            <td colspan="2"><span class="cat-subtotal">R$ ${categorySubtotal.toFixed(2).replace('.', ',')}</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="add-new-row">
+                    <input type="text" id="new-prod-${category}" placeholder="Adicionar novo produto em ${category}...">
+                    <button class="btn-accent" onclick="addNewProduct('${category}')">Adicionar</button>
+                </div>
+            `;
+            container.appendChild(catBlock);
+        }
+        document.getElementById('current-total').textContent = `R$ ${overallTotal.toFixed(2).replace('.', ',')}`;
+    }
+
+    function updateProduct(category, index, field, value) {
+        if (field === 'quantity') {
+            appState.currentList[category][index].quantity = parseFloat(value) || 0;
+        } else if (field === 'unitPrice') {
+            appState.currentList[category][index].unitPrice = parseFloat(value) || 0;
+        } else if (field === 'unitMeasure') {
+            appState.currentList[category][index].unitMeasure = value;
+        }
+        renderList();
+        saveToStorage();
+    }
+
+    function addNewProduct(category) {
+        const input = document.getElementById(`new-prod-${category}`);
+        const name = input.value.trim();
+        if (name === '') return;
+
+        appState.currentList[category].push({
+            name: name,
+            unitPrice: 0,
+            quantity: 0,
+            unitMeasure: "unidade"
+        });
+
+        input.value = '';
+        renderList();
+        saveToStorage();
+    }
+
+    function deleteIndividualItem(category, index) {
+        if(confirm(`Deseja remover o item "${appState.currentList[category][index].name}" desta lista?`)) {
+            appState.currentList[category].splice(index, 1);
+            renderList();
+            saveToStorage();
+        }
+    }
+
+    function filterCategories() {
+        const selected = document.getElementById('category-filter').value;
+        const blocks = document.querySelectorAll('.category-block');
+        blocks.forEach(block => {
+            if (selected === 'todos' || block.getAttribute('data-category') === selected) {
+                block.style.display = 'block';
+            } else {
+                block.style.display = 'none';
+            }
+        });
+    }
+
+    function saveToStorage() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "save", data: JSON.stringify(appState) })
+            })
+            .then(response => response.json())
+            .catch(error => console.error("Erro ao salvar no Sheets:", error));
+        }, 1000);
+    }
+
+    function loadFromStorage() {
+        fetch(SCRIPT_URL)
+        .then(response => response.json())
+        .then(res => {
+            if (res.data) {
+                appState = JSON.parse(res.data);
+                appState.editingIndex = null;
+            } 
+            init();
+        })
+        .catch(error => {
+            console.error("Erro ao ler do Sheets:", error);
+            init();
+        });
+    }
+
+    function saveCurrentList() {
+        const dateValue = document.getElementById('current-date').value;
+        if (!dateValue) {
+            alert('Por favor, defina a data na tela de Dashboard antes de salvar.');
+            return;
+        }
+
+        const parts = dateValue.split('-');
+        const year = parseInt(parts[0], 10);
+        const monthIndex = parseInt(parts[1], 10) - 1;
+        const day = parseInt(parts[2], 10);
+        
+        const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        const shortYear = year.toString().slice(-2);
+        const paddedDay = day.toString().padStart(2, '0');
+        const paddedMonth = (monthIndex + 1).toString().padStart(2, '0');
+        const market = document.getElementById('market-name').value.trim() || "Local não informado";
+
+        const formattedLabel = `${months[monthIndex]}/${shortYear} - ${paddedDay}/${paddedMonth}/${shortYear} - ${market}`;
+        const totalStr = document.getElementById('current-total').textContent;
+        const itemsCopy = JSON.parse(JSON.stringify(appState.currentList));
+
+        const listData = {
+            label: formattedLabel,
+            total: totalStr,
+            year: year,
+            monthIndex: monthIndex,
+            items: itemsCopy
+        };
+
+        if (appState.editingIndex !== null && appState.editingIndex !== undefined) {
+            appState.history[appState.editingIndex] = listData;
+            alert('Lista atualizada com sucesso!');
+        } else {
+            appState.history.push(listData);
+            alert('Lista salva com sucesso!');
+        }
+
+        saveToStorage();
+    }
+
+    function updateHistoryDropdown() {
+        const select = document.getElementById('history-select');
+        const comp1 = document.getElementById('compare-list-1');
+        const comp2 = document.getElementById('compare-list-2');
+
+        const baseOptionHtml = '<option value="">Nenhuma lista selecionada...</option>';
+        const baseCompareOptionHtml = '<option value="">Selecione...</option>';
+
+        select.innerHTML = baseOptionHtml;
+        comp1.innerHTML = baseCompareOptionHtml;
+        comp2.innerHTML = baseCompareOptionHtml;
+
+        appState.history.forEach((hist, index) => {
+            const opt = document.createElement('option');
+            opt.value = index; 
+            opt.textContent = hist.label;
+            select.appendChild(opt);
+
+            const optC1 = document.createElement('option');
+            optC1.value = index;
+            optC1.textContent = hist.label;
+            comp1.appendChild(optC1);
+
+            const optC2 = document.createElement('option');
+            optC2.value = index;
+            optC2.textContent = hist.label;
+            comp2.appendChild(optC2);
+        });
+    }
+
+    function renderUltimasListas() {
+        const container = document.getElementById('ultimas-listas-container');
+        container.innerHTML = '';
+        
+        const ultimas = appState.history.slice(-3).reverse();
+        
+        if(ultimas.length === 0) {
+            container.innerHTML = '<p style="color:#7f8c8d; font-style:italic;">Nenhuma lista salva ainda.</p>';
+            return;
+        }
+
+        get_ultimas(ultimas, container);
+    }
+
+    function get_ultimas(ultimas, container) {
+        ultimas.forEach(lista => {
+            container.innerHTML += `
+                <div class="ultima-lista-item">
+                    <span style="font-weight:bold; color:var(--primary);">${lista.label}</span>
+                    <span style="color:var(--accent); font-weight:bold;">${lista.total}</span>
+                </div>
+            `;
+        });
+    }
+
+    function deleteSelectedList() {
+        const select = document.getElementById('history-select');
+        const idx = select.value;
+        if (idx === '') {
+            alert('Por favor, selecione qual lista deseja excluir.');
+            return;
+        }
+
+        if (confirm(`Tem certeza de que deseja excluir permanentemente a lista:\n${appState.history[idx].label}?`)) {
+            appState.history.splice(idx, 1);
+            saveToStorage();
+            updateHistoryDropdown();
+            renderUltimasListas();
+            alert('Lista excluída com sucesso!');
+        }
+    }
+
+    function printFilteredList() {
+        let printRowsHtml = '';
+
+        for (const [category, products] of Object.entries(appState.currentList)) {
+            const filteredProducts = products.filter(p => p.quantity > 0);
+
+            if (filteredProducts.length > 0) {
+                printRowsHtml += `<div style="margin-top: 15px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000;">${category}</div>`;
+
+                filteredProducts.forEach(p => {
+                    const uMeasure = p.unitMeasure ? ` ${p.unitMeasure}` : '';
+                    printRowsHtml += `<div style="margin: 2px 0;">${p.quantity} ${uMeasure} — ${p.name}</div>`;
+                });
+            }
+        }
+
+        if(printRowsHtml === '') {
+            alert('Nenhum item válido para impressão no momento.');
+            return;
+        }
+
+        const market = document.getElementById('market-name').value.trim() || "Não Informado";
+        const rawDate = document.getElementById('current-date').value;
+        const dateStr = rawDate ? rawDate.split('-').reverse().join('/') : '';
+
+        const printWindowContent = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Imprimir Lista</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    color: #000; 
+                    margin: 0; 
+                    font-size: 14px; 
+                    line-height: 1.4;
+                    /* Margens solicitadas aplicadas via padding para garantir compatibilidade */
+                    padding-top: 1.5cm;
+                    padding-right: 7.0cm;
+                    padding-bottom: 1.0cm;
+                    padding-left: 1.5cm;
+                }
+                .no-print-buttons { text-align: center; margin-bottom: 20px; }
+                .btn { padding: 10px 20px; font-weight: bold; font-size: 14px; background: #f0f0f0; color: #000; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
+                @media print {
+                    .no-print-buttons { display: none !important; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print-buttons">
+                <button class="btn" onclick="window.print()">Confirmar e Imprimir</button>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <h2 style="margin: 0; font-size: 18px;">Lista de Compras</h2>
+                <p style="margin: 5px 0;"><b>Data:</b> ${dateStr} | <b>Local:</b> ${market}</p>
+            </div>
+            <div>
+                ${printRowsHtml}
+            </div>
+        </body>
+        </html>`;
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(printWindowContent);
+        printWindow.document.close();
+    }
+
+    function compareLists() {
+        const idx1 = document.getElementById('compare-list-1').value;
+        const idx2 = document.getElementById('compare-list-2').value;
+
+        if (idx1 === '' || idx2 === '') {
+            alert('Por favor, selecione as duas listas para realizar a comparação.');
+            return;
+        }
+
+        const list1 = appState.history[idx1];
+        const list2 = appState.history[idx2];
+
+        let tableRowsHtml = '';
+        const allCategories = Array.from(new Set([...Object.keys(list1.items), ...Object.keys(list2.items)]));
+
+        allCategories.forEach(cat => {
+            const items1 = list1.items[cat] || [];
+            const items2 = list2.items[cat] || [];
+
+            tableRowsHtml += `
+                <tr class="cat-row">
+                    <td colspan="3" class="cat-split-header">${cat}</td>
+                    <td colspan="3" class="cat-split-header divider-left">${cat}</td>
+                </tr>`;
+
+            let pMap1 = {}, pMap2 = {};
+            items1.forEach(i => pMap1[i.name] = i);
+            items2.forEach(i => pMap2[i.name] = i);
+
+            const allProdNames = Array.from(new Set([...items1.map(i=>i.name), ...items2.map(i=>i.name)]));
+
+            allProdNames.forEach(pName => {
+                const p1 = pMap1[pName];
+                const p2 = pMap2[pName];
+
+                const val1 = p1 ? (p1.unitMeasure === 'gramas' ? (p1.quantity/1000)*p1.unitPrice : p1.quantity*p1.unitPrice) : 0;
+                const val2 = p2 ? (p2.unitMeasure === 'gramas' ? (p2.quantity/1000)*p2.unitPrice : p2.quantity*p2.unitPrice) : 0;
+
+                const p1Html = p1 ? `<td>${p1.name}</td><td>${p1.quantity} ${p1.unitMeasure}</td><td>R$ ${val1.toFixed(2).replace('.',',')}</td>` : '<td>-</td><td>-</td><td>-</td>';
+                const p2Html = p2 ? `<td class="divider-left">${p2.name}</td><td>${p2.quantity} ${p2.unitMeasure}</td><td>R$ ${val2.toFixed(2).replace('.',',')}</td>` : '<td class="divider-left">-</td><td>-</td><td>-</td>';
+
+                tableRowsHtml += `<tr>${p1Html}${p2Html}</tr>`;
+            });
+        });
+
+        let reportHtml = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Comparativo de Listas</title>
+            <style>
+                body { font-family: sans-serif; color: #2f3640; background: #f8f9fa; padding: 20px; }
+                .compare-container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+                h1 { text-align: center; color: #2c3e50; margin-bottom: 25px; }
+                .comparison-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+                .comparison-table th, .comparison-table td { border: 1px solid #dcdde1; padding: 10px; text-align: left; }
+                .comparison-table th { color: white; text-align: center; }
+                .cat-row { background: #34495e !important; color: white; font-weight: bold; }
+                .cat-split-header { font-weight: bold; background: #34495e; color: white; }
+                tr:nth-child(even) { background: #f9f9f9; }
+                .divider-left { border-left: 3px solid #7f8c8d !important; }
+            </style>
+        </head>
+        <body>
+            <div class="compare-container">
+                <h1>Comparativo</h1>
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th colspan="3" style="background:#2980b9;">${list1.label} (${list1.total})</th>
+                            <th colspan="3" style="background:#e67e22;" class="divider-left">${list2.label} (${list2.total})</th>
+                        </tr>
+                        <tr>
+                            <th>Produto</th><th>Qtd/Un</th><th>Valor</th>
+                            <th class="divider-left">Produto</th><th>Qtd/Un</th><th>Valor</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRowsHtml}
+                    </tbody>
+                </table>
+            </div>
+        </body>
+        </html>`;
+
+        const compareWindow = window.open();
+        compareWindow.document.write(reportHtml);
+        compareWindow.document.close();
+    }
+
+    function openEvolutionChart() {
+        const monthsNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+        let yearsSet = new Set();
+        appState.history.forEach(item => {
+            if(item.year) yearsSet.add(parseInt(item.year, 10));
+        });
+
+        const distinctYears = Array.from(yearsSet).sort((a,b) => b - a);
+        const currentSelectedYear = distinctYears[0] || new Date().getFullYear();
+
+        let windowContent = `
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <title>Evolução de Gastos</title>
+            <style>
+                body { font-family: sans-serif; background: #f8f9fa; padding: 25px; }
+                .chart-container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; }
+                .graph-wrapper { display: flex; align-items: flex-end; height: 320px; border-left: 2px solid #7f8c8d; border-bottom: 2px solid #7f8c8d; padding: 20px 10px 0 10px; margin-top: 20px; gap: 15px; }
+                .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
+                .bar { width: 100%; background: #27ae60; border-radius: 4px 4px 0 0; position: relative; }
+                .bar-value { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: bold; color: #2c3e50; }
+                .bar-label { margin-top: 8px; font-size: 0.85rem; font-weight: 600; }
+            </style>
+        </head>
+        <body>
+            <div class="chart-container">
+                <h1 style="text-align:center;">Mensal</h1>
+                <div style="text-align:center;">
+                    <select id="year-filter" onchange="renderYearlyChart(this.value)">
+                        ${distinctYears.map(y => `<option value="${y}" ${y === currentSelectedYear ? 'selected':''}>${y}</option>`).join('')}
+                    </select>
+                </div>
+                <div id="graph-content"></div>
+            </div>
+            <script>
+                const historyData = ${JSON.stringify(appState.history)};
+                const monthsNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+
+                function renderYearlyChart(targetYear) {
+                    let monthlyTotals = Array(12).fill(0);
+                    let hasData = false;
+                    historyData.forEach(item => {
+                        if(parseInt(item.year, 10) === parseInt(targetYear, 10)) {
+                            hasData = true;
+                            let cleanVal = parseFloat(item.total.replace('R$', '').replace(/\\s/g, '').replace('.', '').replace(',', '.').trim()) || 0;
+                            monthlyTotals[item.monthIndex] += cleanVal;
+                        }
+                    });
+
+                    const graphContent = document.getElementById('graph-content');
+                    if(!hasData) { graphContent.innerHTML = '<p style="text-align:center;">Sem dados.</p>'; return; }
+
+                    const maxVal = Math.max(...monthlyTotals, 1);
+                    let graphHtml = '<div class="graph-wrapper">';
+                    monthlyTotals.forEach((total, idx) => {
+                        const pctHeight = (total / maxVal) * 90; 
+                        graphHtml += \`
+                            <div class="bar-group">
+                                <div class="bar" style="height: \${pctHeight}%;">
+                                    \${total > 0 ? \`<span class="bar-value">R$ \${total.toFixed(2).replace('.',',')}</span>\` : ''}
+                                </div>
+                                <div class="bar-label">\${monthsNames[idx]}</div>
+                            </div>
+                        \`;
+                    });
+                    graphHtml += '</div>';
+                    graphContent.innerHTML = graphHtml;
+                }
+                renderYearlyChart(${currentSelectedYear});
+            <\/script>
+        </body>
+        </html>`;
+
+        const chartWindow = window.open();
+        chartWindow.document.write(windowContent);
+        chartWindow.document.close();
+    }
+
+    window.onload = loadFromStorage;
+</script>
+
+</body>
+</html>
