@@ -193,13 +193,20 @@
         
         .inline-totals {
             display: flex;
-            justify-content: flex-end;
+            flex-direction: column;
+            gap: 8px;
             background: #f1f2f6;
             padding: 15px 20px;
             border-radius: 8px;
             margin-bottom: 15px;
             font-weight: bold;
             font-size: 1.1rem;
+        }
+
+        .total-line {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
         }
 
         .total-display { color: var(--accent); margin-left: 10px; }
@@ -250,11 +257,14 @@
             margin-bottom: 20px;
         }
 
-        /* Nova regra para rolagem móvel */
         .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
             border-bottom: 1px solid var(--border);
+        }
+
+        .row-purchased {
+            background-color: #e8f8f5 !important;
         }
     </style>
 </head>
@@ -336,8 +346,18 @@
         </div>
 
         <div class="inline-totals">
-            <span>Total da Lista:</span>
-            <span id="current-total" class="total-display">R$ 0,00</span>
+            <div class="total-line">
+                <span>Total da Lista:</span>
+                <span id="current-total" class="total-display">R$ 0,00</span>
+            </div>
+            <div class="total-line" style="font-size: 0.95rem; align-items: center;">
+                <span style="margin-right: 10px;">Descontos:</span>
+                <input type="number" step="0.01" min="0" id="discount-input" value="0.00" style="width: 110px; padding: 5px;" oninput="updateTotalsDisplay()">
+            </div>
+            <div class="total-line" style="font-size: 1.1rem;">
+                <span>Valor com Descontos:</span>
+                <span id="discounted-total" class="total-display" style="color: #2980b9;">R$ 0,00</span>
+            </div>
         </div>
 
         <div class="filter-section">
@@ -379,6 +399,7 @@
     };
 
     let saveTimeout = null;
+    let listSavedState = true;
 
     document.getElementById('current-date').valueAsDate = new Date();
 
@@ -397,10 +418,13 @@
                 name: prod,
                 unitPrice: 0,
                 quantity: 0,
-                unitMeasure: "unidade"
+                unitMeasure: "unidade",
+                purchased: false
             }));
         }
         
+        document.getElementById('discount-input').value = '0.00';
+        listSavedState = false;
         abrirViewLista();
     }
 
@@ -417,12 +441,20 @@
         const listToOpen = appState.history[idx];
         appState.currentList = JSON.parse(JSON.stringify(listToOpen.items));
         
+        for (const cat in appState.currentList) {
+            appState.currentList[cat].forEach(prod => {
+                if (prod.purchased === undefined) prod.purchased = false;
+            });
+        }
+        
         const marketMatch = listToOpen.label.split(' - ');
         const marketName = marketMatch.length === 3 ? marketMatch[2] : "Local Desconhecido";
         
         document.getElementById('market-name').value = marketName;
         appState.marketName = marketName;
 
+        document.getElementById('discount-input').value = listToOpen.discount !== undefined ? listToOpen.discount : '0.00';
+        listSavedState = true;
         abrirViewLista();
     }
 
@@ -439,6 +471,11 @@
     }
 
     function voltarAoInicio() {
+        if (!listSavedState) {
+            if (!confirm("Você possui alterações não salvas. Deseja voltar ao início sem salvar?")) {
+                return;
+            }
+        }
         document.getElementById('list-view').style.display = 'none';
         document.getElementById('dashboard-view').style.display = 'block';
         appState.editingIndex = null;
@@ -474,6 +511,7 @@
                 const qty = prod.quantity !== undefined ? prod.quantity : 0;
                 const uPrice = prod.unitPrice !== undefined ? prod.unitPrice : 0;
                 const unitMeasure = prod.unitMeasure || 'unidade';
+                const isPurchased = prod.purchased || false;
                 
                 let totalPrice = 0;
                 if (unitMeasure === 'gramas') {
@@ -489,8 +527,11 @@
                 else if (unitMeasure === 'litro') priceLabel = 'por litro';
 
                 rowsHtml += `
-                    <tr>
+                    <tr class="${isPurchased ? 'row-purchased' : ''}">
                         <td class="prod-name" style="font-weight: 500;">${prod.name}</td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" ${isPurchased ? 'checked' : ''} onchange="togglePurchased('${category}', ${index}, this.checked)">
+                        </td>
                         <td>
                             <div class="input-group-tight">
                                 <input type="number" min="0" step="any" value="${qty}" style="width: 70px;" 
@@ -526,17 +567,18 @@
                     <table class="product-table">
                         <thead>
                             <tr>
-                                <th style="width: 30%;">Produto</th>
+                                <th style="width: 25%;">Produto</th>
+                                <th style="width: 10%; text-align: center;">🛒</th>
                                 <th style="width: 30%;">Qtd / Unidade</th>
                                 <th style="width: 20%;">Preço por Unidade</th>
-                                <th style="width: 15%;">Valor</th>
+                                <th style="width: 10%;">Valor</th>
                                 <th style="width: 5%;"></th>
                             </tr>
                         </thead>
                         <tbody id="body-${category}">
                             ${rowsHtml}
                             <tr class="subtotal-row">
-                                <td colspan="3" style="text-align: right;">Subtotal da Categoria:</td>
+                                <td colspan="4" style="text-align: right;">Subtotal da Categoria:</td>
                                 <td colspan="2"><span class="cat-subtotal">R$ ${categorySubtotal.toFixed(2).replace('.', ',')}</span></td>
                             </tr>
                         </tbody>
@@ -550,6 +592,22 @@
             container.appendChild(catBlock);
         }
         document.getElementById('current-total').textContent = `R$ ${overallTotal.toFixed(2).replace('.', ',')}`;
+        updateTotalsDisplay();
+    }
+
+    function togglePurchased(category, index, isChecked) {
+        appState.currentList[category][index].purchased = isChecked;
+        listSavedState = false;
+        renderList();
+        saveToStorage();
+    }
+
+    function updateTotalsDisplay() {
+        const totalText = document.getElementById('current-total').textContent;
+        const cleanTotal = parseFloat(totalText.replace('R$', '').replace(/\s/g, '').replace('.', '').replace(',', '.')) || 0;
+        const discountVal = parseFloat(document.getElementById('discount-input').value) || 0;
+        const finalVal = Math.max(0, cleanTotal - discountVal);
+        document.getElementById('discounted-total').textContent = `R$ ${finalVal.toFixed(2).replace('.', ',')}`;
     }
 
     function updateProduct(category, index, field, value) {
@@ -560,6 +618,7 @@
         } else if (field === 'unitMeasure') {
             appState.currentList[category][index].unitMeasure = value;
         }
+        listSavedState = false;
         renderList();
         saveToStorage();
     }
@@ -573,10 +632,12 @@
             name: name,
             unitPrice: 0,
             quantity: 0,
-            unitMeasure: "unidade"
+            unitMeasure: "unidade",
+            purchased: false
         });
 
         input.value = '';
+        listSavedState = false;
         renderList();
         saveToStorage();
     }
@@ -584,6 +645,7 @@
     function deleteIndividualItem(category, index) {
         if(confirm(`Deseja remover o item "${appState.currentList[category][index].name}" desta lista?`)) {
             appState.currentList[category].splice(index, 1);
+            listSavedState = false;
             renderList();
             saveToStorage();
         }
@@ -649,11 +711,13 @@
 
         const formattedLabel = `${months[monthIndex]}/${shortYear} - ${paddedDay}/${paddedMonth}/${shortYear} - ${market}`;
         const totalStr = document.getElementById('current-total').textContent;
+        const discountVal = document.getElementById('discount-input').value;
         const itemsCopy = JSON.parse(JSON.stringify(appState.currentList));
 
         const listData = {
             label: formattedLabel,
             total: totalStr,
+            discount: discountVal,
             year: year,
             monthIndex: monthIndex,
             items: itemsCopy
@@ -667,6 +731,7 @@
             alert('Lista salva com sucesso!');
         }
 
+        listSavedState = true;
         saveToStorage();
     }
 
@@ -746,20 +811,20 @@
         let printRowsHtml = '';
 
         for (const [category, products] of Object.entries(appState.currentList)) {
-            const filteredProducts = products.filter(p => p.quantity > 0);
+            const filteredProducts = products.filter(p => p.quantity > 0 && p.purchased);
 
             if (filteredProducts.length > 0) {
                 printRowsHtml += `<div style="margin-top: 15px; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #000;">${category}</div>`;
 
                 filteredProducts.forEach(p => {
                     const uMeasure = p.unitMeasure ? ` ${p.unitMeasure}` : '';
-                    printRowsHtml += `<div style="margin: 2px 0;">${p.quantity} ${uMeasure} — ${p.name}</div>`;
+                    printRowsHtml += `<div style="margin: 2px 0;">[✓] ${p.quantity} ${uMeasure} — ${p.name}</div>`;
                 });
             }
         }
 
         if(printRowsHtml === '') {
-            alert('Nenhum item válido para impressão no momento.');
+            alert('Nenhum item marcado com a caixa de seleção para impressão no momento.');
             return;
         }
 
@@ -920,12 +985,17 @@
             <title>Evolução de Gastos</title>
             <style>
                 body { font-family: sans-serif; background: #f8f9fa; padding: 25px; }
-                .chart-container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; }
-                .graph-wrapper { display: flex; align-items: flex-end; height: 320px; border-left: 2px solid #7f8c8d; border-bottom: 2px solid #7f8c8d; padding: 20px 10px 0 10px; margin-top: 20px; gap: 15px; }
-                .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; }
-                .bar { width: 100%; background: #27ae60; border-radius: 4px 4px 0 0; position: relative; }
-                .bar-value { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: bold; color: #2c3e50; }
+                .chart-container { max-width: 1050px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; }
+                .chart-flex-layout { display: flex; gap: 30px; align-items: flex-start; margin-top: 20px; }
+                .graph-wrapper { display: flex; align-items: flex-end; height: 350px; border-left: 2px solid #7f8c8d; border-bottom: 2px solid #7f8c8d; padding: 20px 10px 0 10px; flex: 1; gap: 15px; }
+                .bar-group { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; position: relative; }
+                .bar { width: 100%; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; position: relative; }
+                .bar-segment { width: 100%; transition: height 0.3s; }
+                .bar-value { position: absolute; top: -25px; left: 50%; transform: translateX(-50%); font-size: 0.75rem; font-weight: bold; color: #2c3e50; white-space: nowrap; }
                 .bar-label { margin-top: 8px; font-size: 0.85rem; font-weight: 600; }
+                .legend-container { display: flex; flex-direction: column; gap: 8px; min-width: 200px; padding: 15px; background: #f8f9fa; border: 1px solid #dcdde1; border-radius: 6px; }
+                .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 600; }
+                .legend-color { width: 16px; height: 16px; border-radius: 3px; flex-shrink: 0; }
             </style>
         </head>
         <body>
@@ -936,34 +1006,97 @@
                         ${distinctYears.map(y => `<option value="${y}" ${y === currentSelectedYear ? 'selected':''}>${y}</option>`).join('')}
                     </select>
                 </div>
-                <div id="graph-content"></div>
+                <div class="chart-flex-layout">
+                    <div id="graph-content" style="flex: 1;"></div>
+                    <div class="legend-container" id="legend-content"></div>
+                </div>
             </div>
             <script>
                 const historyData = ${JSON.stringify(appState.history)};
                 const monthsNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+                
+                const categoryColors = {
+                    "BÁSICOS": "#3498db",
+                    "PÃES": "#e67e22",
+                    "CARNES": "#e74c3c",
+                    "LEGUMES": "#2ecc71",
+                    "VERDURAS": "#1abc9c",
+                    "FRUTAS": "#f1c40f",
+                    "DIVERSOS": "#9b59b6",
+                    "HIGIENE PESSOAL": "#34495e",
+                    "LIMPEZA": "#e84393"
+                };
 
                 function renderYearlyChart(targetYear) {
+                    let monthlyCategoryTotals = Array.from({length: 12}, () => ({}));
                     let monthlyTotals = Array(12).fill(0);
                     let hasData = false;
+
                     historyData.forEach(item => {
                         if(parseInt(item.year, 10) === parseInt(targetYear, 10)) {
                             hasData = true;
-                            let cleanVal = parseFloat(item.total.replace('R$', '').replace(/\\s/g, '').replace('.', '').replace(',', '.').trim()) || 0;
-                            monthlyTotals[item.monthIndex] += cleanVal;
+                            const mIdx = item.monthIndex;
+                            if(item.items) {
+                                for(const [cat, products] of Object.entries(item.items)) {
+                                    let catSum = 0;
+                                    products.forEach(p => {
+                                        const qty = p.quantity !== undefined ? p.quantity : 0;
+                                        const uPrice = p.unitPrice !== undefined ? p.unitPrice : 0;
+                                        const unitMeasure = p.unitMeasure || 'unidade';
+                                        let tPrice = (unitMeasure === 'gramas') ? (qty / 1000) * uPrice : qty * uPrice;
+                                        catSum += tPrice;
+                                    });
+                                    if(catSum > 0) {
+                                        monthlyCategoryTotals[mIdx][cat] = (monthlyCategoryTotals[mIdx][cat] || 0) + catSum;
+                                        monthlyTotals[mIdx] += catSum;
+                                    }
+                                }
+                            }
                         }
                     });
 
                     const graphContent = document.getElementById('graph-content');
-                    if(!hasData) { graphContent.innerHTML = '<p style="text-align:center;">Sem dados.</p>'; return; }
+                    const legendContent = document.getElementById('legend-content');
+
+                    // Renderizar Legenda
+                    let legendHtml = '<h3 style="margin:0 0 5px 0; font-size:0.95rem; color:#2c3e50;">Categorias</h3>';
+                    for(const [cat, color] of Object.entries(categoryColors)) {
+                        legendHtml += \`
+                            <div class="legend-item">
+                                <div class="legend-color" style="background: \${color};"></div>
+                                <span>\${cat}</span>
+                            </div>
+                        \`;
+                    }
+                    legendContent.innerHTML = legendHtml;
+
+                    if(!hasData) { 
+                        graphContent.innerHTML = '<p style="text-align:center; margin-top:50px;">Sem dados para este ano.</p>'; 
+                        return; 
+                    }
 
                     const maxVal = Math.max(...monthlyTotals, 1);
                     let graphHtml = '<div class="graph-wrapper">';
+                    
                     monthlyTotals.forEach((total, idx) => {
                         const pctHeight = (total / maxVal) * 90; 
                         graphHtml += \`
                             <div class="bar-group">
+                                \${total > 0 ? \`<span class="bar-value">R$ \${total.toFixed(2).replace('.',',')}</span>\` : ''}
                                 <div class="bar" style="height: \${pctHeight}%;">
-                                    \${total > 0 ? \`<span class="bar-value">R$ \${total.toFixed(2).replace('.',',')}</span>\` : ''}
+                        \`;
+
+                        if(total > 0) {
+                            for(const [cat, color] of Object.entries(categoryColors)) {
+                                const catVal = monthlyCategoryTotals[idx][cat] || 0;
+                                if(catVal > 0) {
+                                    const segmentPct = (catVal / total) * 100;
+                                    graphHtml += \`<div class="bar-segment" style="height: \${segmentPct}%; background: \${color};" title="\${cat}: R$ \${catVal.toFixed(2)}"></div>\`;
+                                }
+                            }
+                        }
+
+                        graphHtml += \`
                                 </div>
                                 <div class="bar-label">\${monthsNames[idx]}</div>
                             </div>
