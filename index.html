@@ -187,9 +187,12 @@
             gap: 10px;
             padding: 12px 15px;
             border-top: 1px solid var(--border);
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .add-new-row input { flex: 1; padding: 6px 10px; }
+        .add-new-row input { flex: 1; padding: 6px 10px; min-width: 200px; }
         
         .inline-totals {
             display: flex;
@@ -305,14 +308,17 @@
                 </select>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <button type="button" class="btn-primary" onclick="abrirListaSelecionada()">Editar Lista</button>
+                <button type="button" class="btn-primary" onclick="abrirListaSelecionada()">Ver/Editar Lista</button>
                 <button type="button" class="btn-danger" onclick="deleteSelectedList()">Excluir Lista</button>
             </div>
+        </div>
+        <div style="margin-top: 15px;">
+            <a class="all-lists-link" style="margin-left: 0;" onclick="openEvolutionChart()">mensal</a>
         </div>
     </div>
 
     <div class="section-block">
-        <h2 class="section-title">Comparar Listas</h2>
+        <h2 class="section-title">COMPARAR PREÇOS</h2>
         <div class="row-grid">
             <div class="panel-group">
                 <label for="compare-list-1">Lista 1:</label>
@@ -330,9 +336,6 @@
                 <button type="button" class="btn-warning" onclick="compareLists()">Comparar</button>
             </div>
         </div>
-        <div style="margin-top: 15px;">
-            <a class="all-lists-link" style="margin-left: 0;" onclick="openEvolutionChart()">Mensal</a>
-        </div>
     </div>
 </div>
 
@@ -340,8 +343,12 @@
     <div class="sticky-header">
         <div class="top-actions-list">
             <button type="button" class="btn-primary" onclick="voltarAoInicio()">← Voltar ao início</button>
-            <div style="text-align: right;">
-                <h2 id="list-header-info" style="margin:0; color: var(--primary); font-size: 1.2rem;"></h2>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button type="button" class="btn-primary" onclick="saveCurrentList()">Salvar Lista</button>
+                <div style="text-align: right; display: flex; gap: 8px; align-items: center;">
+                    <input type="date" id="edit-header-date" style="padding: 5px; font-size: 0.9rem;">
+                    <input type="text" id="edit-header-market" placeholder="Local..." style="padding: 5px; font-size: 0.9rem; width: 140px;" oninput="syncHeaderEdit(this.value)">
+                </div>
             </div>
         </div>
 
@@ -424,6 +431,8 @@
         }
         
         document.getElementById('discount-input').value = '0.00';
+        document.getElementById('edit-header-date').value = document.getElementById('current-date').value;
+        document.getElementById('edit-header-market').value = appState.marketName;
         listSavedState = false;
         abrirViewLista();
     }
@@ -453,18 +462,26 @@
         document.getElementById('market-name').value = marketName;
         appState.marketName = marketName;
 
+        if(listToOpen.rawDate) {
+            document.getElementById('edit-header-date').value = listToOpen.rawDate;
+        } else {
+            document.getElementById('edit-header-date').value = document.getElementById('current-date').value;
+        }
+        document.getElementById('edit-header-market').value = marketName;
+
         document.getElementById('discount-input').value = listToOpen.discount !== undefined ? listToOpen.discount : '0.00';
         listSavedState = true;
         abrirViewLista();
     }
 
+    function syncHeaderEdit(val) {
+        appState.marketName = val;
+        listSavedState = false;
+    }
+
     function abrirViewLista() {
         document.getElementById('dashboard-view').style.display = 'none';
         document.getElementById('list-view').style.display = 'block';
-        
-        const d = document.getElementById('current-date').value;
-        const rawDate = d ? d.split('-').reverse().join('/') : '';
-        document.getElementById('list-header-info').textContent = `${rawDate} - ${appState.marketName || 'Local não informado'}`;
         
         populateCategoryFilter();
         renderList();
@@ -692,9 +709,9 @@
     }
 
     function saveCurrentList() {
-        const dateValue = document.getElementById('current-date').value;
+        const dateValue = document.getElementById('edit-header-date').value || document.getElementById('current-date').value;
         if (!dateValue) {
-            alert('Por favor, defina a data na tela de Dashboard antes de salvar.');
+            alert('Por favor, defina a data antes de salvar.');
             return;
         }
 
@@ -707,7 +724,7 @@
         const shortYear = year.toString().slice(-2);
         const paddedDay = day.toString().padStart(2, '0');
         const paddedMonth = (monthIndex + 1).toString().padStart(2, '0');
-        const market = document.getElementById('market-name').value.trim() || "Local não informado";
+        const market = document.getElementById('edit-header-market').value.trim() || document.getElementById('market-name').value.trim() || "Local não informado";
 
         const formattedLabel = `${months[monthIndex]}/${shortYear} - ${paddedDay}/${paddedMonth}/${shortYear} - ${market}`;
         const totalStr = document.getElementById('current-total').textContent;
@@ -720,6 +737,7 @@
             discount: discountVal,
             year: year,
             monthIndex: monthIndex,
+            rawDate: dateValue,
             items: itemsCopy
         };
 
@@ -828,8 +846,8 @@
             return;
         }
 
-        const market = document.getElementById('market-name').value.trim() || "Não Informado";
-        const rawDate = document.getElementById('current-date').value;
+        const market = document.getElementById('edit-header-market').value.trim() || document.getElementById('market-name').value.trim() || "Não Informado";
+        const rawDate = document.getElementById('edit-header-date').value || document.getElementById('current-date').value;
         const dateStr = rawDate ? rawDate.split('-').reverse().join('/') : '';
 
         const printWindowContent = `
@@ -968,6 +986,10 @@
     }
 
     function openEvolutionChart() {
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock("landscape").catch(() => {});
+        }
+
         const monthsNames = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
         let yearsSet = new Set();
         appState.history.forEach(item => {
@@ -1000,7 +1022,7 @@
         </head>
         <body>
             <div class="chart-container">
-                <h1 style="text-align:center;">Mensal</h1>
+                <h1 style="text-align:center;">mensal</h1>
                 <div style="text-align:center;">
                     <select id="year-filter" onchange="renderYearlyChart(this.value)">
                         ${distinctYears.map(y => `<option value="${y}" ${y === currentSelectedYear ? 'selected':''}>${y}</option>`).join('')}
@@ -1058,7 +1080,6 @@
                     const graphContent = document.getElementById('graph-content');
                     const legendContent = document.getElementById('legend-content');
 
-                    // Renderizar Legenda
                     let legendHtml = '<h3 style="margin:0 0 5px 0; font-size:0.95rem; color:#2c3e50;">Categorias</h3>';
                     for(const [cat, color] of Object.entries(categoryColors)) {
                         legendHtml += \`
