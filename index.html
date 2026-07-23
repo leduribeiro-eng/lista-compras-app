@@ -26,6 +26,11 @@
             color: var(--text);
             margin: 0;
             padding: 20px;
+            box-sizing: border-box;
+        }
+
+        *, *:before, *:after {
+            box-sizing: inherit;
         }
 
         .container {
@@ -35,6 +40,7 @@
             padding: 30px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
         }
 
         h1 {
@@ -95,6 +101,7 @@
             border-radius: 6px;
             font-size: 0.95rem;
             outline: none;
+            width: 100%;
         }
 
         .all-lists-link {
@@ -187,12 +194,10 @@
             gap: 10px;
             padding: 12px 15px;
             border-top: 1px solid var(--border);
-            overflow-x: auto;
-            white-space: nowrap;
-            -webkit-overflow-scrolling: touch;
+            align-items: center;
         }
 
-        .add-new-row input { flex: 1; padding: 6px 10px; min-width: 200px; }
+        .add-new-row input { flex: 1; padding: 8px 10px; min-width: 0; }
         
         .inline-totals {
             display: flex;
@@ -216,20 +221,46 @@
         
         .top-actions-list {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 12px;
             margin-bottom: 20px;
             border-bottom: 2px solid var(--border);
             padding-bottom: 15px;
         }
 
+        .top-actions-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .top-actions-row button, .top-actions-row .panel-group-header {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .panel-group-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
         .bottom-actions {
             display: flex;
+            flex-direction: column;
             gap: 15px;
             margin-top: 30px;
             padding-top: 20px;
             border-top: 2px solid var(--border);
         }
+        
+        .bottom-actions-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            width: 100%;
+        }
+
         .bottom-actions button { flex: 1; padding: 15px; font-size: 1.1rem; }
 
         .price-label { font-size: 0.8rem; color: #7f8c8d; display: block; margin-top: 4px; }
@@ -268,6 +299,25 @@
 
         .row-purchased {
             background-color: #e8f8f5 !important;
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            .add-new-row button.btn-accent {
+                font-size: 0;
+                width: 40px;
+                height: 40px;
+                padding: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+            .add-new-row button.btn-accent::after {
+                content: "+";
+                font-size: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -342,12 +392,18 @@
 <div class="container" id="list-view" style="display: none;">
     <div class="sticky-header">
         <div class="top-actions-list">
-            <button type="button" class="btn-primary" onclick="voltarAoInicio()">← Voltar ao início</button>
-            <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="top-actions-row">
+                <button type="button" class="btn-primary" onclick="voltarAoInicio()">← Voltar ao início</button>
                 <button type="button" class="btn-primary" onclick="saveCurrentList()">Salvar Lista</button>
-                <div style="text-align: right; display: flex; gap: 8px; align-items: center;">
-                    <input type="date" id="edit-header-date" style="padding: 5px; font-size: 0.9rem;">
-                    <input type="text" id="edit-header-market" placeholder="Local..." style="padding: 5px; font-size: 0.9rem; width: 140px;" oninput="syncHeaderEdit(this.value)">
+            </div>
+            <div class="top-actions-row">
+                <div class="panel-group-header">
+                    <label for="edit-header-date" style="font-size:0.75rem;">Data:</label>
+                    <input type="date" id="edit-header-date">
+                </div>
+                <div class="panel-group-header">
+                    <label for="edit-header-market" style="font-size:0.75rem;">Local:</label>
+                    <input type="text" id="edit-header-market" placeholder="Local..." oninput="syncHeaderEdit(this.value)">
                 </div>
             </div>
         </div>
@@ -378,8 +434,14 @@
     <div id="list-container"></div>
 
     <div class="bottom-actions">
-        <button type="button" class="btn-primary" onclick="saveCurrentList()">Salvar Lista</button>
-        <button type="button" class="btn-warning" onclick="printFilteredList()">Imprimir Lista</button>
+        <div class="bottom-actions-row">
+            <button type="button" class="btn-primary" onclick="saveCurrentList()">Salvar Lista</button>
+            <button type="button" class="btn-warning" onclick="printFilteredList()">Imprimir Lista</button>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+            <input type="checkbox" id="print-with-price" style="width: auto; cursor: pointer;">
+            <label for="print-with-price" style="cursor: pointer; font-weight: 600; color: var(--text);">Com preço</label>
+        </div>
     </div>
 </div>
 
@@ -827,6 +889,7 @@
 
     function printFilteredList() {
         let printRowsHtml = '';
+        const withPrice = document.getElementById('print-with-price').checked;
 
         for (const [category, products] of Object.entries(appState.currentList)) {
             const filteredProducts = products.filter(p => p.quantity > 0 && p.purchased);
@@ -836,7 +899,14 @@
 
                 filteredProducts.forEach(p => {
                     const uMeasure = p.unitMeasure ? ` ${p.unitMeasure}` : '';
-                    printRowsHtml += `<div style="margin: 2px 0;">[✓] ${p.quantity} ${uMeasure} — ${p.name}</div>`;
+                    let priceDetail = '';
+                    if (withPrice) {
+                        const qty = p.quantity || 0;
+                        const uPrice = p.unitPrice || 0;
+                        const totalPrice = (p.unitMeasure === 'gramas') ? (qty / 1000) * uPrice : qty * uPrice;
+                        priceDetail = ` — R$ ${totalPrice.toFixed(2).replace('.', ',')} (Unit: R$ ${uPrice.toFixed(2).replace('.', ',')})`;
+                    }
+                    printRowsHtml += `<div style="margin: 2px 0;">[✓] ${p.quantity} ${uMeasure} — ${p.name}${priceDetail}</div>`;
                 });
             }
         }
@@ -1022,7 +1092,7 @@
         </head>
         <body>
             <div class="chart-container">
-                <h1 style="text-align:center;">mensal</h1>
+                <h1 style="text-align:center;">Gasto mensal</h1>
                 <div style="text-align:center;">
                     <select id="year-filter" onchange="renderYearlyChart(this.value)">
                         ${distinctYears.map(y => `<option value="${y}" ${y === currentSelectedYear ? 'selected':''}>${y}</option>`).join('')}
